@@ -31,7 +31,6 @@ namespace Ofd2Pdf
             var result = ofd.ShowDialog();
             if (result == DialogResult.OK)
             {
-                fileList.Clear();
                 foreach (var file in ofd.FileNames)
                 {
                     OFDFile oFDFile = new OFDFile(file);
@@ -83,16 +82,27 @@ namespace Ofd2Pdf
 
         private void button2_Click(object sender, EventArgs e)
         {
+            if (fileList.Count == 0)
+            {
+                MessageBox.Show("请先添加或拖拽文件！", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
             Task.Run(() =>
             {
+                bool didSth = false;
                 for (int i = 0; i < fileList.Count; i++)
                 {
+                    if (fileList[i].Status == Status.转换完成)
+                    {
+                        continue;
+                    }
                     var item = listView1.Items[i].SubItems[1];
                     OfdConverter converter = new OfdConverter(fileList[i].FileName);
                     try
                     {
                         item.ForeColor = ConvertColor(Status.正在转换);
                         item.Text = Status.正在转换.ToString();
+                        fileList[i].Status = Status.正在转换;
                         string PdfName = fileList[i].FileName.Substring(0, fileList[i].FileName.Length - 3) + "pdf";
                         converter.ToPdf(PdfName);
                     }
@@ -100,11 +110,41 @@ namespace Ofd2Pdf
                     {
                         item.ForeColor = ConvertColor(Status.转换失败);
                         item.Text = Status.转换失败.ToString();
+                        fileList[i].Status = Status.转换失败;
                     }
                     item.ForeColor = ConvertColor(Status.转换完成);
                     item.Text = Status.转换完成.ToString();
+                    fileList[i].Status = Status.转换完成;
+                    didSth = true;
+                }
+                if (!didSth)
+                {
+                    MessageBox.Show("当前所有任务已经完成，请添加新的文件或清空重来。", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 }
             });
+        }
+
+        private void listView1_DragEnter(object sender, DragEventArgs e)
+        {
+            if (e.Data.GetDataPresent(DataFormats.FileDrop))
+            {
+                e.Effect = DragDropEffects.Move;
+            }
+            else
+            {
+                e.Effect = DragDropEffects.None;
+            }
+        }
+
+        private void listView1_DragDrop(object sender, DragEventArgs e)
+        {
+            string[] files = (string[])e.Data.GetData(DataFormats.FileDrop);
+            foreach (var file in files)
+            {
+                OFDFile oFDFile = new OFDFile(file);
+                fileList.Add(oFDFile);
+            }
+            LoadFilesToListView();
         }
     }
 }
