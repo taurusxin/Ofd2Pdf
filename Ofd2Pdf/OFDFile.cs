@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Ofd2Pdf
 {
-    enum Status
+    public enum Status
     {
         等待转换,
         正在转换,

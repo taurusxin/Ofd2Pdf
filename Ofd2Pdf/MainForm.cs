@@ -22,6 +22,8 @@ namespace Ofd2Pdf
 
         List<OFDFile> fileList = new List<OFDFile>();
 
+        Converter converter = new Converter();
+
         private void button1_Click(object sender, EventArgs e)
         {
             OpenFileDialog ofd = new OpenFileDialog();
@@ -96,26 +98,32 @@ namespace Ofd2Pdf
                     {
                         continue;
                     }
+
+                    // get the list item
                     var item = listView1.Items[i].SubItems[1];
-                    OfdConverter converter = new OfdConverter(fileList[i].FileName);
-                    try
-                    {
-                        item.ForeColor = ConvertColor(Status.正在转换);
-                        item.Text = Status.正在转换.ToString();
-                        fileList[i].Status = Status.正在转换;
-                        string PdfName = fileList[i].FileName.Substring(0, fileList[i].FileName.Length - 3) + "pdf";
-                        converter.ToPdf(PdfName);
-                    }
-                    catch (Exception)
+
+                    // set converting
+                    item.ForeColor = ConvertColor(Status.正在转换);
+                    item.Text = Status.正在转换.ToString();
+                    fileList[i].Status = Status.正在转换;
+
+                    // convert to pdf
+                    string PdfName = fileList[i].FileName.Substring(0, fileList[i].FileName.Length - 3) + "pdf";
+                    ConvertResult result = converter.ConvertToPdf(fileList[i].FileName, PdfName);
+
+                    if (result == ConvertResult.Failed)
                     {
                         item.ForeColor = ConvertColor(Status.转换失败);
                         item.Text = Status.转换失败.ToString();
                         fileList[i].Status = Status.转换失败;
                     }
-                    item.ForeColor = ConvertColor(Status.转换完成);
-                    item.Text = Status.转换完成.ToString();
-                    fileList[i].Status = Status.转换完成;
-                    didSth = true;
+                    else
+                    {
+                        item.ForeColor = ConvertColor(Status.转换完成);
+                        item.Text = Status.转换完成.ToString();
+                        fileList[i].Status = Status.转换完成;
+                        didSth = true;
+                    }
                 }
                 if (!didSth)
                 {
